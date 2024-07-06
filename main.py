@@ -25,6 +25,13 @@ import translationClass
 from pyorbbecsdk import *
 from utils import frame_to_bgr_image
 
+def pixel_to_camera_coordinates(u, v, d, fx, fy, cx, cy):
+    # 计算相机坐标系下的三维坐标
+    X = (u - cx) * d / fx
+    Y = (v - cy) * d / fy
+    Z = d
+    return X, Y, Z
+
 def main():
     pipeline = Pipeline()
     device = pipeline.get_device()
@@ -69,6 +76,7 @@ def main():
     # pipeline.enable_frame_sync()
     pipeline.start(config)
     camera_param = pipeline.get_camera_param()
+    print(f"\n\n\n{camera_param}\n\n\n")
     while True:
         frames: FrameSet = pipeline.wait_for_frames(100)
         if frames is None:
@@ -98,11 +106,16 @@ def main():
 
         for index, row in detections.iterrows():
             print(f"index: {index} Class: {row['name']}, Confidence: {row['confidence']}, Coordinates: ({row['xmin']}, {row['ymin']}, {row['xmax']}, {row['ymax']})")
-            center_x=int((int(row['xmin'])+int(row['xmax']))/2)
-            center_y=int((int(row['ymin'])+int(row['ymax']))/2)
+            center_x=int((row['xmin']+row['xmax'])/2)
+            center_y=int((row['ymin']+row['ymax'])/2)
             center=[center_y,center_y]
-            translate.trans(center,depth_data)
-            print(f"position: {depth_data[center_x][center_y]} location: {translate.world_coord[0]},{translate.world_coord[1]},{translate.world_coord[2]}")
+            fx = 545.103
+            fy = 545.103
+            cx = 321.608
+            cy = 243.754
+            X, Y, Z = pixel_to_camera_coordinates(center_x, center_y, depth_data[center_y][center_x], fx, fy, cx, cy)
+            # translate.trans(center,depth_data)
+            print(f"position: {center_x},{center_y},depth={depth_data[center_y][center_x]} location: X={X}, Y={Y}, Z={Z}")
             
 if __name__ == "__main__":
     main()
