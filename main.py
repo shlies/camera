@@ -27,6 +27,9 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int8
 from camerapkg.msg import coordinate
+
+import threading
+
 def pixel_to_camera_coordinates(u, v, d, fx, fy, cx, cy):
     # 计算相机坐标系下的三维坐标
     X = (u - cx) * d / fx
@@ -43,15 +46,16 @@ def calculate_3d_coordinates(u, v, W_image, W_real, D_known, fx, fy, cx, cy):
     
     return X, Y, Z
 
-class Camera_Publisher(Node):
-    def __init__(self,name,nnum,nx,ny,nz,ntype):
-        super().__init__(name)
-        coord_msg = coordinates()
-        coord_msg.x=nx,coord_msg.y=ny,coord_msg.z=nz,coord_msg.type=ntype
-        self.command_publisher_ = self.create_publisher(coord_msg) 
-        self.command_publisher_ = self.create_publisher(Int8,"x", 10) 
 
-def main():
+class CameraNode(Node):
+   def __init__(self):
+        super().__init__('CameraNode')
+        self.coord_publisher_ = self.create_publisher(coordinate, 'coordinate', 10) 
+        self.num_publisher_ = self.create_publisher(Int8,"num", 10) 
+        self.auto_run_thread = threading.Thread(target=self.execute_some_task)  # 创建一个线程来执行自动运行的函数
+        self.auto_run_thread.start()  # 启动线程
+
+   def execute_some_task(self):
     pipeline = Pipeline()
     device = pipeline.get_device()
     device_info = device.get_device_info()
@@ -117,7 +121,42 @@ def main():
         depth_image = cv2.applyColorMap(depth_image, cv2.COLORMAP_JET)
         # overlay color image on depth image
         depth_image = cv2.addWeighted(color_image, 0.5, depth_image, 0.5, 0)
+        #第一个循环用于计数有效目标
+        num=0
+        for index, row in detections.iterrows():
+            print(f"index: {index} Class: {row['name']}, Confidence: {row['confidence']}, Coordinates: ({row['xmin']}, {row['ymin']}, {row['xmax']}, {row['ymax']})")
+            
+            center_x=int((row['xmin']+row['xmax'])/2)
+            center_y=int((row['ymin']+row['ymax'])/2)
+            center=[center_x,center_y]
+            fx = 545.103
+            fy = 545.103
+            cx = 321.608
+            cy = 243.754
+            X, Y, Z = pixel_to_camera_coordinates(center_x, center_y, depth_data[center_y][center_x], fx, fy, cx, cy)
+            
+            fx = 545.103
+            fy = 545.103
+            cx = 321.608
+            cy = 243.754
+            # 目标在已知距离下的实际大小
+            W_real = 60  # 目标的宽度
+            D_known = 553  # 已知距离
 
+            # 计算三维坐标
+            X1, Y1, Z1= calculate_3d_coordinates(center_x, center_y, (row['xmax']-row['xmin']), W_real, D_known, fx, fy, cx, cy)
+
+            depth_cv=math.sqrt(X1*X1+Y1*Y1+Z1*Z1)
+            if(1-row["confidence"]>depth_cv*0.0005):
+                continue
+            cv2.putText(depth_image,f"{int(X)},{int(Y)},{int(Z)}\n{int(X1)},{int(Y1)},{int(Z1)}", center,5,1,(255, 255, 255))
+            print(f"position: {center_x},{center_y},depth={depth_data[center_y][center_x]} location: X={X}, Y={Y}, Z={Z} location_p: X={X1}, Y={Y1}, Z={Z1}")
+            num+=1
+        num_msg=Int8()
+        num_msg.data=num
+        self.num_publisher_.publish(num_msg)
+        
+        #第二个循环输出坐标和类型
         for index, row in detections.iterrows():
             print(f"index: {index} Class: {row['name']}, Confidence: {row['confidence']}, Coordinates: ({row['xmin']}, {row['ymin']}, {row['xmax']}, {row['ymax']})")
             
@@ -147,8 +186,22 @@ def main():
             cv2.putText(depth_image,f"{int(X)},{int(Y)},{int(Z)}\n{int(X1)},{int(Y1)},{int(Z1)}", center,5,1,(255, 255, 255))
             print(f"position: {center_x},{center_y},depth={depth_data[center_y][center_x]} location: X={X}, Y={Y}, Z={Z} location_p: X={X1}, Y={Y1}, Z={Z1}")
 
+            coord_msg = coordinate()
+            coord_msg.x=X1,coord_msg.y=Y1,coord_msg.z=Z1,coord_msg.type=row['name']
+            self.coord_publisher_.publish(coord_msg)
         cv2.imshow("SyncAlignViewer ", depth_image)
         cv2.waitKey(1)
+        
+    # 循环结束后的清理工作
+        cv2.destroyAllWindows()
+        pipeline.stop()
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = CameraNode()
+    rclpy.spin(node)  # 进入spin循环，保持节点运行状态
+    rclpy.shutdown()
+
 
 if __name__ == "__main__":
     main()
