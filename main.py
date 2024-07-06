@@ -20,7 +20,7 @@
 import cv2
 import numpy as np
 import yolov5
-# import translationClass
+import translationClass
 
 from pyorbbecsdk import *
 from utils import frame_to_bgr_image
@@ -63,14 +63,14 @@ def main():
     model = yolov5.load('./camera.pt')
     print("\n\n\n\n\nLoad complete\n\n")
 
-    # translate = translationClass()
+    translate = translationClass.Translation()
     
 
     # pipeline.enable_frame_sync()
     pipeline.start(config)
     camera_param = pipeline.get_camera_param()
     while True:
-        frames = pipeline.wait_for_frames(100)
+        frames: FrameSet = pipeline.wait_for_frames(100)
         if frames is None:
             continue
         color_frame = frames.get_color_frame()
@@ -81,22 +81,28 @@ def main():
         results=model(color_image,augment=True)
         results.print()
         results.render()
-
-        cv2.imshow("Color Viewer", color_image)
-        key = cv2.waitKey(1)
         detections = results.pandas().xyxy[0]
-        for index, row in detections.iterrows():
-            print(f"Class: {row['name']}, Confidence: {row['confidence']}, Coordinates: ({row['xmin']}, {row['ymin']}, {row['xmax']}, {row['ymax']})")
-
-
+        
         width = depth_frame.get_width()
         height = depth_frame.get_height()
         scale = depth_frame.get_depth_scale()
-
         depth_data = np.frombuffer(depth_frame.get_data(), dtype=np.uint16)
         depth_data = depth_data.reshape((height, width))
         depth_data = depth_data.astype(np.float32) * scale
-        
+        depth_image = cv2.normalize(depth_data, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        depth_image = cv2.applyColorMap(depth_image, cv2.COLORMAP_JET)
+        # overlay color image on depth image
+        depth_image = cv2.addWeighted(color_image, 0.5, depth_image, 0.5, 0)
+        cv2.imshow("SyncAlignViewer ", depth_image)
+        key = cv2.waitKey(1)
+
+        for index, row in detections.iterrows():
+            print(f"index: {index} Class: {row['name']}, Confidence: {row['confidence']}, Coordinates: ({row['xmin']}, {row['ymin']}, {row['xmax']}, {row['ymax']})")
+            center_x=int((int(row['xmin'])+int(row['xmax']))/2)
+            center_y=int((int(row['ymin'])+int(row['ymax']))/2)
+            center=[center_y,center_y]
+            translate.trans(center,depth_data)
+            print(f"position: {depth_data[center_x][center_y]} location: {translate.world_coord[0]},{translate.world_coord[1]},{translate.world_coord[2]}")
             
 if __name__ == "__main__":
     main()
