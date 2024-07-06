@@ -17,11 +17,9 @@
 @par last editor  shlies (shlies@github.com)
 @par last edit time  2024-07-06
 '''
-import cv2
+import cv2,math
 import numpy as np
 import yolov5
-import translationClass
-
 from pyorbbecsdk import *
 from utils import frame_to_bgr_image
 
@@ -91,9 +89,6 @@ def main():
     model = yolov5.load('./camera.pt')
     print("\n\n\n\n\nLoad complete\n\n")
 
-    translate = translationClass.Translation()
-    
-
     # pipeline.enable_frame_sync()
     pipeline.start(config)
     camera_param = pipeline.get_camera_param()
@@ -125,8 +120,7 @@ def main():
 
         for index, row in detections.iterrows():
             print(f"index: {index} Class: {row['name']}, Confidence: {row['confidence']}, Coordinates: ({row['xmin']}, {row['ymin']}, {row['xmax']}, {row['ymax']})")
-            if(row['confidence']<0.7):
-                continue
+            
             center_x=int((row['xmin']+row['xmax'])/2)
             center_y=int((row['ymin']+row['ymax'])/2)
             center=[center_x,center_y]
@@ -140,7 +134,6 @@ def main():
             fy = 545.103
             cx = 321.608
             cy = 243.754
-
             # 目标在已知距离下的实际大小
             W_real = 60  # 目标的宽度
             D_known = 553  # 已知距离
@@ -148,13 +141,14 @@ def main():
             # 计算三维坐标
             X1, Y1, Z1= calculate_3d_coordinates(center_x, center_y, (row['xmax']-row['xmin']), W_real, D_known, fx, fy, cx, cy)
 
-
-            # translate.trans(center,depth_data)
+            depth_cv=math.sqrt(X1*X1+Y1*Y1+Z1*Z1)
+            if(1-row["confidence"]>depth_cv*0.0005):
+                continue
             cv2.putText(depth_image,f"{int(X)},{int(Y)},{int(Z)}\n{int(X1)},{int(Y1)},{int(Z1)}", center,5,1,(255, 255, 255))
             print(f"position: {center_x},{center_y},depth={depth_data[center_y][center_x]} location: X={X}, Y={Y}, Z={Z} location_p: X={X1}, Y={Y1}, Z={Z1}")
 
         cv2.imshow("SyncAlignViewer ", depth_image)
-        key = cv2.waitKey(1)
+        cv2.waitKey(1)
 
 if __name__ == "__main__":
     main()
