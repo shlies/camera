@@ -2,7 +2,7 @@
 
 克隆仓库
     
-    git clone 
+    git clone https://github.com/shlies/camera.git
 
 创建虚拟环境
 
