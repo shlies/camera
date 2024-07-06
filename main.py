@@ -25,6 +25,10 @@ import translationClass
 from pyorbbecsdk import *
 from utils import frame_to_bgr_image
 
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Int8
+from camerapkg.msg import coordinate
 def pixel_to_camera_coordinates(u, v, d, fx, fy, cx, cy):
     # 计算相机坐标系下的三维坐标
     X = (u - cx) * d / fx
@@ -40,6 +44,14 @@ def calculate_3d_coordinates(u, v, W_image, W_real, D_known, fx, fy, cx, cy):
     Y = (v - cy) * Z / fy
     
     return X, Y, Z
+
+class Camera_Publisher(Node):
+    def __init__(self,name,nnum,nx,ny,nz,ntype):
+        super().__init__(name)
+        coord_msg = coordinates()
+        coord_msg.x=nx,coord_msg.y=ny,coord_msg.z=nz,coord_msg.type=ntype
+        self.command_publisher_ = self.create_publisher(coord_msg) 
+        self.command_publisher_ = self.create_publisher(Int8,"x", 10) 
 
 def main():
     pipeline = Pipeline()
@@ -140,6 +152,7 @@ def main():
             # translate.trans(center,depth_data)
             cv2.putText(depth_image,f"{int(X)},{int(Y)},{int(Z)}\n{int(X1)},{int(Y1)},{int(Z1)}", center,5,1,(255, 255, 255))
             print(f"position: {center_x},{center_y},depth={depth_data[center_y][center_x]} location: X={X}, Y={Y}, Z={Z} location_p: X={X1}, Y={Y1}, Z={Z1}")
+
         cv2.imshow("SyncAlignViewer ", depth_image)
         key = cv2.waitKey(1)
 
