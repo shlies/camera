@@ -2,8 +2,8 @@ import numpy as np
 import cv2
 
 class Translation:
-    def __init__(self, depth_map_in, coord_in):
-        self.world_coord = self.image_to_world_vectorized(coord_in, depth_map_in, self.intrinsic_matrix, self.rotation_vector, self.translation_vector, self.rgb_distortion_matrix)
+    def __init__(self):
+        print("Translation started successfully!")
 
     fx = 545.103
     fy = 545.103
@@ -21,7 +21,7 @@ class Translation:
     intrinsic_matrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
     rotation_vector = np.array([0, 0, 0])
     translation_vector = np.array([0, 0, 0])
-    rgb_distortion_matrix = np.load('rgb_distortion_matrix.npy')
+    rgb_distortion_matrix = np.array([[k1,k2,p1],[k3,k4,p2],[k5,k6,1]])
 
 
     def image_to_world_vectorized(self, coords, depth_map, M, r_vec, T, rgb_distortion_matrix):
@@ -61,4 +61,5 @@ class Translation:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-
+    def trans(self, coords_in, depth_map_in,):
+        self.world_coord = self.image_to_world_vectorized(coords_in, depth_map_in, self.intrinsic_matrix, self.rotation_vector, self.translation_vector, self.rgb_distortion_matrix)
