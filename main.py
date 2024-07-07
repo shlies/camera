@@ -105,10 +105,8 @@ def main():
         depth_image = cv2.applyColorMap(depth_image, cv2.COLORMAP_JET)
         # overlay color image on depth image
         depth_image = cv2.addWeighted(color_image, 0.5, depth_image, 0.5, 0)
-
         for index, row in detections.iterrows():
             print(f"index: {index} Class: {row['name']}, Confidence: {row['confidence']}, Coordinates: ({row['xmin']}, {row['ymin']}, {row['xmax']}, {row['ymax']})")
-            
             center_x=int((row['xmin']+row['xmax'])/2)
             center_y=int((row['ymin']+row['ymax'])/2)
             center=[center_x,center_y]
