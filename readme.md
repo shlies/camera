@@ -43,6 +43,11 @@ Build the Project
     pip3 install dist/*.whl
     pip3 install yolov5
 
+配置相机权限
+
+    sudo bash ./scripts/install_udev_rules.sh
+    sudo udevadm control --reload-rules && sudo udevadm trigger
+
 配置路经
 
     export LD_LIBRARY_PATH=/包含/libOrbbecSDK.so.1.10的目录路径:$LD_LIBRARY_PATH  
