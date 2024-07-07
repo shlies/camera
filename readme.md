@@ -42,6 +42,16 @@ Build the Project
     python3 setup.py bdist_wheel
     pip3 install dist/*.whl
     pip3 install yolov5
-    
+
+配置路经
+
+    export LD_LIBRARY_PATH=/包含/libOrbbecSDK.so.1.10的目录路径:$LD_LIBRARY_PATH  
+
+把 “/包含/libOrbbecSDK.so.1.10的目录路径” 替换成你的，查找该路径方法：
+
+    locate libOrbbecSDK.so.1.10
+
+
 Go!
+
     python color_viewer.py
