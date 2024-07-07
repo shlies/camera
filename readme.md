@@ -47,6 +47,8 @@ Build the Project
 
     export LD_LIBRARY_PATH=/包含/libOrbbecSDK.so.1.10的目录路径:$LD_LIBRARY_PATH  
 
+    source ~/.bashrc
+
 把 “/包含/libOrbbecSDK.so.1.10的目录路径” 替换成你的，查找该路径方法：
 
     locate libOrbbecSDK.so.1.10
