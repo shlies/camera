@@ -43,7 +43,7 @@ def main():
         print(e)
         return
     print("\n\n\n\n\n\n\n\nLoding Model\n\n")
-    model = yolov5.load('/home/shlies/yolov5/camera.pt')
+    model = yolov5.load('./camera.pt')
     # cpkt=torch.load("./photos/camera.pt")
     # yolov5_load=model
     # yolov5_load.model=cpkt["model"]
