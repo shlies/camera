@@ -97,7 +97,7 @@ def main():
             X1, Y1, Z1 = calculate_3d_coordinates(center_x, center_y, (row['xmax'] - row['xmin']), W_real, D_known, fx, fy, cx, cy)
 
             depth_cv = math.sqrt(X1 * X1 + Y1 * Y1 + Z1 * Z1)
-            if (1 - row["confidence"] > depth_cv * 0.0005):
+            if (1 - row["confidence"] > depth_cv * 0.0025):
                 continue
             cv2.putText(depth_image, f"{int(X)},{int(Y)},{int(Z)}\n{int(X1)},{int(Y1)},{int(Z1)}", (center_x, center_y), 5, 1, (255, 255, 255))
             
@@ -113,6 +113,8 @@ def main():
 
         if detected_objects:
             send_data(json.dumps(detected_objects))
+        else:
+            send_data(json.dumps([{'class': 'A', 'confidence': 0, 'coordinates': {'center': [0, 0],'calculated_3d': [10.0, 0.0, 1.0]}}]))
 
         cv2.imshow("SyncAlignViewer", depth_image)
         cv2.waitKey(1)
