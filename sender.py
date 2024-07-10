@@ -97,7 +97,7 @@ def main():
             X1, Y1, Z1 = calculate_3d_coordinates(center_x, center_y, (row['xmax'] - row['xmin']), W_real, D_known, fx, fy, cx, cy)
 
             depth_cv = math.sqrt(X1 * X1 + Y1 * Y1 + Z1 * Z1)
-            if (1 - row["confidence"] > depth_cv * 0.0005):
+            if (1 - row["confidence"] > depth_cv * 0.002):
                 continue
             cv2.putText(depth_image, f"{int(X)},{int(Y)},{int(Z)}\n{int(X1)},{int(Y1)},{int(Z1)}", (center_x, center_y), 5, 1, (255, 255, 255))
             

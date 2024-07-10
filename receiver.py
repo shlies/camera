@@ -24,14 +24,18 @@ class SocketToROSPublisher(Node):
     def handle_client(self, conn):
         with conn:
             while True:
-                data = conn.recv(1024)
+                data = conn.recv(2024)
                 if not data:
                     break
-                received_objects = json.loads(data.decode('utf-8'))
-                self.get_logger().info(f"Received data: {received_objects}")
-                msg = String()
-                msg.data = json.dumps(received_objects)
-                self.publisher_.publish(msg)
+                try:
+                    received_objects = json.loads(data.decode('utf-8'))
+                    self.get_logger().info(f"Received data: {received_objects}")
+                    msg = String()
+                    msg.data = json.dumps(received_objects)
+                    self.publisher_.publish(msg)
+                except:
+                    self.get_logger().error("decode error")
+
 
 def main(args=None):
     rclpy.init(args=args)
