@@ -113,6 +113,8 @@ def main():
 
         if detected_objects:
             send_data(json.dumps(detected_objects))
+        else:
+            send_data(json.dumps([{'class': 'A', 'confidence': 0, 'coordinates': {'center': [0, 0],'calculated_3d': [10.0, 0.0, 1.0]}}]))
 
         cv2.imshow("SyncAlignViewer", depth_image)
         cv2.waitKey(1)
