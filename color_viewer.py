@@ -20,6 +20,7 @@ from pyorbbecsdk import OBError
 from pyorbbecsdk import OBSensorType, OBFormat
 from pyorbbecsdk import Pipeline, FrameSet
 from pyorbbecsdk import VideoStreamProfile
+from pathlib import Path
 import yolov5
 # from pyorbbecsdk import *
 from utils import frame_to_bgr_image
@@ -43,6 +44,7 @@ def main():
         print(e)
         return
     print("\n\n\n\n\n\n\n\nLoding Model\n\n")
+    model_path = Path('/home/shlies/camera/camerav2.pt').resolve()
     model = yolov5.load('./camera.pt')
     # cpkt=torch.load("./photos/camera.pt")
     # yolov5_load=model
